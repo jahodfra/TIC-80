@@ -991,12 +991,15 @@ static s32 lua_time(lua_State *lua)
 	return 1;
 }
 
+extern int profile_function_calls;
+extern clock_t profile_function_time;
+
 static s32 lua_exit(lua_State *lua)
 {
 	tic_machine* machine = getLuaMachine(lua);
 
 	machine->data->exit(machine->data->data);
-	
+	printf("Profiler: %d calls, %.3lf total ms, %.3f ms per call\n", profile_function_calls, ((double) profile_function_time) * 1e-3, ((double) profile_function_time) / profile_function_calls * 1e-3);
 	return 0;
 }
 

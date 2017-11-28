@@ -25,6 +25,7 @@
 #include <stdio.h>
 #include <math.h>
 #include <ctype.h>
+#include <time.h>
 
 #include "ticapi.h"
 #include "tools.h"
@@ -1645,8 +1646,13 @@ static u32* paletteBlit(tic_mem* tic)
 	return pal;
 }
 
+int profile_function_calls = 0;
+clock_t profile_function_time = 0;
+
 static void api_blit(tic_mem* tic, u32* out, tic_scanline scanline)
 {
+	profile_function_calls++;
+	clock_t start_t = clock();
 	const u32* pal = paletteBlit(tic);
 
 	if(scanline)
@@ -1684,6 +1690,7 @@ static void api_blit(tic_mem* tic, u32* out, tic_scanline scanline)
 	}
 
 	memset4(&out[(TIC80_FULLHEIGHT-Bottom) * TIC80_FULLWIDTH], pal[tic->ram.vram.vars.border], TIC80_FULLWIDTH*Bottom);
+	profile_function_time += clock() - start_t;
 }
 
 static void initApi(tic_api* api)
