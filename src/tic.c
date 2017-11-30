@@ -201,15 +201,15 @@ static void drawRectBorder(tic_machine* machine, s32 x, s32 y, s32 width, s32 he
 	drawVLine(machine, x + width - 1, y, height, color);
 }
 
-#define DRAW_TILE_BODY(sx, ex, sy, ey, index_expr) ({\
-	y += sy; \
-	for(s32 py=sy; py < ey; py++, y++) \
+#define DRAW_TILE_BODY(SX, EX, SY, EY, INDEX_EXPR) ({\
+	y += SY; \
+	for(s32 py=SY; py < EY; py++, y++) \
 	{ \
-		s32 xx = x + sx; \
-		for(s32 px=sx; px < ex; px++, xx++) \
+		s32 xx = x + SX; \
+		for(s32 px=SX; px < EX; px++, xx++) \
 		{ \
-			u8 color = mapping[tic_tool_peek4(buffer, index_expr)]; \
-			if(color != 255) tic_tool_poke4(machine->memory.ram.vram.screen.data, y * TIC80_WIDTH + xx, color); \
+			u8 color = mapping[(buffer->data[(INDEX_EXPR) >> 1]) & 0xf]; \
+			if(color != 255) machine->memory.ram.vram.screen.data[(y * TIC80_WIDTH + xx) >> 1] = color; \
 		} \
 	} \
 	})
