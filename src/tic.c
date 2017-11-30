@@ -201,7 +201,7 @@ static void drawRectBorder(tic_machine* machine, s32 x, s32 y, s32 width, s32 he
 	drawVLine(machine, x + width - 1, y, height, color);
 }
 
-#define DRAW_TILE_BODY(index_expr) ({\
+#define DRAW_TILE_BODY(sx, ex, sy, ey, index_expr) ({\
 	y += sy; \
 	for(s32 py=sy; py < ey; py++, y++) \
 	{ \
@@ -231,19 +231,27 @@ static void drawTile(tic_machine* machine, const tic_tile* buffer, s32 x, s32 y,
 	if (scale == 1) {
 		// the most common path
 		s32 sx, sy, ex, ey;
-		sx = machine->state.clip.l - x; if (sx < 0) sx = 0;
-		sy = machine->state.clip.t - y; if (sy < 0) sy = 0;
-		ex = machine->state.clip.r - x; if (ex > TIC_SPRITESIZE) ex = TIC_SPRITESIZE;
-		ey = machine->state.clip.b - y; if (ey > TIC_SPRITESIZE) ey = TIC_SPRITESIZE;
+		sx = machine->state.clip.l - x; if (sx < 0) sx = 0; else orientation |= 0b1000;
+		sy = machine->state.clip.t - y; if (sy < 0) sy = 0; else orientation |= 0b1000;
+		ex = machine->state.clip.r - x; if (ex > TIC_SPRITESIZE) ex = TIC_SPRITESIZE; else orientation |= 0b1000;
+		ey = machine->state.clip.b - y; if (ey > TIC_SPRITESIZE) ey = TIC_SPRITESIZE; else orientation |= 0b1000;
 		switch (orientation) {
-			case 0b100: DRAW_TILE_BODY(px * TIC_SPRITESIZE + py); break;
-			case 0b110: DRAW_TILE_BODY(px * TIC_SPRITESIZE + TIC_SPRITESIZE - py - 1); break;
-			case 0b101: DRAW_TILE_BODY((TIC_SPRITESIZE - px - 1) * TIC_SPRITESIZE + py); break;
-			case 0b111: DRAW_TILE_BODY((TIC_SPRITESIZE - px) * TIC_SPRITESIZE - py - 1); break;
-			case 0b000: DRAW_TILE_BODY(py * TIC_SPRITESIZE + px); break;
-			case 0b010: DRAW_TILE_BODY((TIC_SPRITESIZE - py - 1) * TIC_SPRITESIZE + px); break;
-			case 0b001: DRAW_TILE_BODY(py * TIC_SPRITESIZE + TIC_SPRITESIZE - px - 1); break;
-			case 0b011: DRAW_TILE_BODY((TIC_SPRITESIZE - py) * TIC_SPRITESIZE - px - 1); break;
+			case 0b0100: DRAW_TILE_BODY(0, TIC_SPRITESIZE, 0, TIC_SPRITESIZE, px * TIC_SPRITESIZE + py); break;
+			case 0b0110: DRAW_TILE_BODY(0, TIC_SPRITESIZE, 0, TIC_SPRITESIZE, px * TIC_SPRITESIZE + TIC_SPRITESIZE - py - 1); break;
+			case 0b0101: DRAW_TILE_BODY(0, TIC_SPRITESIZE, 0, TIC_SPRITESIZE, (TIC_SPRITESIZE - px - 1) * TIC_SPRITESIZE + py); break;
+			case 0b0111: DRAW_TILE_BODY(0, TIC_SPRITESIZE, 0, TIC_SPRITESIZE, (TIC_SPRITESIZE - px) * TIC_SPRITESIZE - py - 1); break;
+			case 0b0000: DRAW_TILE_BODY(0, TIC_SPRITESIZE, 0, TIC_SPRITESIZE, py * TIC_SPRITESIZE + px); break;
+			case 0b0010: DRAW_TILE_BODY(0, TIC_SPRITESIZE, 0, TIC_SPRITESIZE, (TIC_SPRITESIZE - py - 1) * TIC_SPRITESIZE + px); break;
+			case 0b0001: DRAW_TILE_BODY(0, TIC_SPRITESIZE, 0, TIC_SPRITESIZE, py * TIC_SPRITESIZE + TIC_SPRITESIZE - px - 1); break;
+			case 0b0011: DRAW_TILE_BODY(0, TIC_SPRITESIZE, 0, TIC_SPRITESIZE, (TIC_SPRITESIZE - py) * TIC_SPRITESIZE - px - 1); break;
+			case 0b1100: DRAW_TILE_BODY(sx, ex, sy, ey, px * TIC_SPRITESIZE + py); break;
+			case 0b1110: DRAW_TILE_BODY(sx, ex, sy, ey, px * TIC_SPRITESIZE + TIC_SPRITESIZE - py - 1); break;
+			case 0b1101: DRAW_TILE_BODY(sx, ex, sy, ey, (TIC_SPRITESIZE - px - 1) * TIC_SPRITESIZE + py); break;
+			case 0b1111: DRAW_TILE_BODY(sx, ex, sy, ey, (TIC_SPRITESIZE - px) * TIC_SPRITESIZE - py - 1); break;
+			case 0b1000: DRAW_TILE_BODY(sx, ex, sy, ey, py * TIC_SPRITESIZE + px); break;
+			case 0b1010: DRAW_TILE_BODY(sx, ex, sy, ey, (TIC_SPRITESIZE - py - 1) * TIC_SPRITESIZE + px); break;
+			case 0b1001: DRAW_TILE_BODY(sx, ex, sy, ey, py * TIC_SPRITESIZE + TIC_SPRITESIZE - px - 1); break;
+			case 0b1011: DRAW_TILE_BODY(sx, ex, sy, ey, (TIC_SPRITESIZE - py) * TIC_SPRITESIZE - px - 1); break;
 			default: assert(!"Unknown value of orientation in drawTile");
 		}
 		return;
