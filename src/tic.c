@@ -201,15 +201,14 @@ static void drawRectBorder(tic_machine* machine, s32 x, s32 y, s32 width, s32 he
 	drawVLine(machine, x + width - 1, y, height, color);
 }
 
-#define DRAW_TILE_BODY(index_expr) ({\
-	y += sy; \
+#define DRAW_TILE_BODY(INDEX_EXPR) ({\
 	for(s32 py=sy; py < ey; py++, y++) \
 	{ \
-		s32 xx = x + sx; \
-		for(s32 px=sx; px < ex; px++, xx++) \
+		s32 screen_index = y * TIC80_WIDTH + x; \
+		for(s32 px=sx; px < ex; px++, screen_index++) \
 		{ \
-			u8 color = mapping[tic_tool_peek4(buffer, index_expr)]; \
-			if(color != 255) tic_tool_poke4(machine->memory.ram.vram.screen.data, y * TIC80_WIDTH + xx, color); \
+			u8 color = mapping[tic_tool_peek4(buffer, INDEX_EXPR)]; \
+			if(color != 255)) tic_tool_poke4(machine->memory.ram.vram.screen.data, screen_index, color); \
 		} \
 	} \
 	})
@@ -238,12 +237,34 @@ static void drawTile(tic_machine* machine, const tic_tile* buffer, s32 x, s32 y,
 		sy = machine->state.clip.t - y; if (sy < 0) sy = 0;
 		ex = machine->state.clip.r - x; if (ex > TIC_SPRITESIZE) ex = TIC_SPRITESIZE;
 		ey = machine->state.clip.b - y; if (ey > TIC_SPRITESIZE) ey = TIC_SPRITESIZE;
+		y += sy;
+		x += sx;
 		switch (orientation) {
 			case 0b100: DRAW_TILE_BODY(INDEX_XY(py, px)); break;
 			case 0b110: DRAW_TILE_BODY(INDEX_XY(REVERT(py), px)); break;
 			case 0b101: DRAW_TILE_BODY(INDEX_XY(py, REVERT(px))); break;
 			case 0b111: DRAW_TILE_BODY(INDEX_XY(REVERT(py), REVERT(px))); break;
-			case 0b000: DRAW_TILE_BODY(INDEX_XY(px, py)); break;
+			case 0b000:
+				if (x & 1) x--;
+				for(s32 py=sy; py < ey; py++, y++)
+				{
+					u8 *screen = machine->memory.ram.vram.screen.data + ((y * TIC80_WIDTH + x) >> 1);
+					s32 sprite_index = (py * TIC_SPRITESIZE + sx) >> 1;
+					for(s32 px=sx; px < (ex >> 1); px++, sprite_index++, screen++)
+					{
+						u8 orig_color = buffer->data[sprite_index];
+						u8 color1 = mapping[orig_color & 0xf];
+						u8 color2 = mapping[orig_color >> 4];
+						if (color1 != 255 && color2 != 255) *screen = color2 << 4 | color1;
+						else if (color1 != 255) *screen = (*screen & 0xf0) | color1;
+						else if (color2 != 255) *screen = (*screen & 0x0f) | color2 << 4;
+					}
+					if (ex & 1) {
+						u8 color = mapping[tic_tool_peek4(buffer, y * TIC_SPRITESIZE + ex)];
+						if(color != 255) tic_tool_poke4(machine->memory.ram.vram.screen.data, y * TIC80_WIDTH + x + ex, color);
+					}
+				}
+				break;
 			case 0b010: DRAW_TILE_BODY(INDEX_XY(px, REVERT(py))); break;
 			case 0b001: DRAW_TILE_BODY(INDEX_XY(REVERT(px), py)); break;
 			case 0b011: DRAW_TILE_BODY(INDEX_XY(REVERT(px), REVERT(py))); break;
