@@ -208,7 +208,7 @@ static void drawRectBorder(tic_machine* machine, s32 x, s32 y, s32 width, s32 he
 		for(s32 px=sx; px < ex; px++, screen_index++) \
 		{ \
 			u8 color = mapping[tic_tool_peek4(buffer, INDEX_EXPR)]; \
-			if(color != 255)) tic_tool_poke4(machine->memory.ram.vram.screen.data, screen_index, color); \
+			if(color != 255) tic_tool_poke4(machine->memory.ram.vram.screen.data, screen_index, color); \
 		} \
 	} \
 	})
